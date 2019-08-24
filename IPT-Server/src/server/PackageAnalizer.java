@@ -40,12 +40,12 @@ public class PackageAnalizer {
         try{
         BigInteger b1 = new BigInteger(p1);
         
-        BigInteger b2 = new BigInteger("192.168.1.11".getBytes());
+        BigInteger b2 = new BigInteger("169.254.244.245".getBytes());
 
         BigInteger o = b1.xor(b2);
         System.out.print("  :  "+convertBigIntegerToString(o));
         //-----------------------------
-        BigInteger b3 = new BigInteger(InetAddress.getByName("192.168.1.11").getHostAddress().getBytes());
+        BigInteger b3 = new BigInteger(InetAddress.getByName("169.254.244.245").getHostAddress().getBytes());
         //BigInteger b3 = new BigInteger("192.168.1.11".getBytes());
         o = o.xor(b3);
         return convertBigIntegerToString(o);

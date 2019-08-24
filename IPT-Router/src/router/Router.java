@@ -6,6 +6,7 @@
 package router;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -16,12 +17,12 @@ import java.net.UnknownHostException;
  *
  * @author MadEye
  */
-public class Router extends Thread {
+public class Router extends Thread implements Serializable{
 
     private int nxtRouter;
     private DatagramSocket receiverSocket, senderSocket;
     private InetAddress ipAddress;
-    private int MAX_LEN = 528;
+    private int MAX_LEN = 544;
 
     public Router(int port, int nxtRouter, String ipAddress, boolean flag) throws UnknownHostException {
         this.nxtRouter = nxtRouter;
@@ -29,89 +30,133 @@ public class Router extends Thread {
         try {
             receiverSocket = new DatagramSocket(port);
         } catch (Exception ex) {
-            ex.printStackTrace();
+            System.err.println("UnknownHostException");
         }
         System.out.println("Router " + port + " Started...");
     }
 
     private void markPacket() throws IOException {
         BigInteger ip1 = new BigInteger(InetAddress.getLocalHost().getHostAddress().getBytes());
+        
+        int ip1_Len = ip1.toByteArray().length;
         senderSocket = new DatagramSocket();
         while (true) {
-            byte b[] = new byte[MAX_LEN];
-            DatagramPacket rdp = new DatagramPacket(b, b.length);
+            byte inputData[] = new byte[MAX_LEN];
+            DatagramPacket rdp = new DatagramPacket(inputData, inputData.length);
             receiverSocket.receive(rdp);
-            System.out.println("[>] Received Packet [Size: " + rdp.getLength() + "]");
-
-            byte[] packet = new byte[rdp.getLength() + ip1.toByteArray().length+1];
-            byte[] ip = new byte[ip1.toByteArray().length];
-            int markStart = -1;
-            for (int i = 0; i < rdp.getLength(); i++) {
-                if (rdp.getData()[i] == (byte) -2) {
-                    markStart = i;
-                    ip = new byte[rdp.getLength()-markStart-1];
-                    packet = new byte[rdp.getLength()];
+            
+            // Sourse IP address
+            BigInteger ip2 = new BigInteger(rdp.getAddress().getHostAddress().getBytes());
+            System.out.println("Data Comming from : "+InetAddress.getLocalHost().getHostAddress());
+            
+            System.out.println("[>] Received Packet length : " + rdp.getLength());
+            int ipLen;
+            boolean marked = false;
+            byte[] mark=new byte[1];
+            byte[] xyz=new byte[1];
+            int dataLen=0;
+            
+            byte[] rData=new byte[rdp.getLength()];
+            for(int i=0;i<rData.length;i++){
+                rData[i]=rdp.getData()[i];
+            }
+            byte[] dcp=CryptoUtils.decrypt(rData);
+            byte[] data=(dcp!=null)?dcp:rData;
+            
+            System.out.print("[**]");
+            for(byte b:data){
+                System.out.print(b);
+            }
+            System.out.println("[**]");
+            
+            byte[] packet = new byte[data.length + ip1_Len + 1];
+            
+            for (int i = 0; i < data.length; i++) {
+                if (data[i] == (byte) -2) {
+                    marked = true;
+                    dataLen=i;
+                    ipLen = data.length - (i+1);
+                    mark =new byte[ipLen];
                     continue;
                 }
-                if(markStart>0){
-                    ip[i-(markStart+1)]=rdp.getData()[i];
+                if(marked){
+                    mark[i-(dataLen+1)] = data[i];
                 }
             }
-            //adding full data
-            for (int i = 0; i < rdp.getLength(); i++) {
-                packet[i] = rdp.getData()[i];
+            //Pre-Marked Packet
+            if (marked) {
+                System.out.println("[*] Marked Packet");
                 
+                System.out.print("[[[");
+                for(byte b:mark)
+                    System.out.print(b);
+                System.out.print(" - ");
+                for(byte b:ip1.toByteArray())
+                    System.out.print(b);
+                System.out.println("]]]");
+                
+                byte[] xor_mark = new BigInteger(mark).xor(ip1).toByteArray();  
+                packet = new byte[dataLen+xor_mark.length+1];
+                
+                //Fetching data to packet
+                int count=0;
+                byte b;
+                while((b=data[count])!=(byte)-2){
+                    packet[count]=b;
+                    count++;
+                }
+                //adding end of Data falg
+                packet[count]= (byte) -2;
+                System.out.println("[D] Data length : "+count);
+                
+                //Marking 
+                count++;
+                System.out.print("[#] New Mark : ");
+                for(int i=count,j=0;i<packet.length;i++,j++){
+                     packet[i]=xor_mark[j];
+                     System.out.print(packet[i]);
+                }
+                System.out.println();
             }
-
-            //Starting of Mark
-            if (markStart > 0) {
-                System.out.println("[#] Marking alrady Marked Packet[Source:Router]");
+            //Fresh Packet
+            else{
+                System.out.println("[*] Fresh Packet");
+                //Fetching data to packet
                 
+                //System.out.println(convertBigIntegerToString(ip1)+"   =   "+convertBigIntegerToString(ip2));
+                int count;
+                for(count=0;count<data.length;count++){
+                    packet[count]=data[count];
+                }
+                //adding end of data flag
+                packet[count] = (byte) -2;
                 
-                BigInteger ip2 = new BigInteger(ip);
-                // XORing
-                byte[] xor_ip = ip2.xor(ip1).toByteArray();
-                //adding Mark
-                System.out.print("{$} Mark ["+convertBigIntegerToString(ip1)+"] + [");
-                for(byte c:ip){
-                    System.out.print(c);
-                }
-                System.out.print("] = [");
-                for (int i = markStart+1, j = 0; i < packet.length; i++, j++) {
-                    packet[i] = xor_ip[j];
-                    System.out.print(xor_ip[j]);
-                }
-                System.out.println("]");
-            } else {
-                System.out.println("[*] Marking fress Packet[Source:Client]");
-
-                //flag
-                packet[rdp.getLength()] = (byte) -2;
-                //adding Mark
-                // XORing
-                BigInteger ip2 = new BigInteger(rdp.getAddress().getHostAddress().getBytes());
-                // XORing
-                byte[] xor_ip = ip2.xor(ip1).toByteArray();
-                
-                System.out.print("{$} Mark ["+convertBigIntegerToString(ip1)+"] + ["+convertBigIntegerToString(ip2)+"] = [");
-                for (int i = 0, j = rdp.getLength() + 1; i < xor_ip.length; j++, i++) {
-                    packet[j] = xor_ip[i];
-                    System.out.print(xor_ip[i]);
-                }
-                System.out.println("]");
+                //Marking 
+                count++;
+                byte[] xor_mark = ip2.xor(ip1).toByteArray();
+                System.out.print("[#] New Mark : ");
+                 for(int i=count,j=0;i<packet.length;i++,j++){
+                     packet[i]=xor_mark[j];
+                     System.out.print(packet[i]);
+                 }
+                 System.out.println();
             }
+            //Encrypting data
+            byte[] enc=CryptoUtils.encrypt(packet);
             //Sending packet
-            System.out.println("[<] Sending Packet [Packet Size: " + packet.length + "]");
-            DatagramPacket sdp = new DatagramPacket(packet, packet.length, ipAddress, nxtRouter);
+            System.out.println("[<] Sending Data length : "+enc.length);
+            DatagramPacket sdp = new DatagramPacket(enc, enc.length, ipAddress, nxtRouter);
             senderSocket.send(sdp);
+            System.out.println("------------------------------------------------------------");
         }
     }
 
+    @Override
     public void run() {
         try {
             markPacket();
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Error while staring THREAD");
         }
     }
 
@@ -120,7 +165,7 @@ public class Router extends Thread {
         while (b.compareTo(BigInteger.ZERO) == 1) {
             BigInteger c = new BigInteger("11111111", 2);
             int cb = (b.and(c)).intValue();
-            Character cv = new Character((char) cb);
+            Character cv = (char) cb;
             s = (cv.toString()).concat(s);
             b = b.shiftRight(8);
         }

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 
 public class FileReceiver extends Thread {
 
+    private static final int MAX_LEN=544;
     File file;
     InetAddress ipAddress;
     String fName;
@@ -46,43 +47,36 @@ public class FileReceiver extends Thread {
     public void receiveData() throws IOException {
         boolean flag=true;
         while (flag) {
-            byte b[] = new byte[528];
+            byte b[] = new byte[MAX_LEN];
             DatagramPacket dp = new DatagramPacket(b, b.length);
             dsoc.receive(dp);
             System.out.println("[>] Received Packet [Size: "+dp.getLength()+"]");
             
-            //data
-            byte[] data = new byte[1];
-            byte t;
-            int count=0;
-            boolean x=false;
-            for(int i=0;i<dp.getLength();i++){
-                //Data length
-                if(dp.getData()[i]==(byte)-2){
-                    data=new byte[i];
-                    x=true;
-                    continue;
-                }
-                //Mark length
-                if(x){
-                    count++;
-                }
+            byte[] rData=new byte[dp.getLength()];
+            for(int i=0;i<rData.length;i++){
+                rData[i]=dp.getData()[i];
             }
-            byte[] ip = new byte[count];
+            byte[] dcp=CryptoUtils.decrypt(rData);
+            byte[] inData=(dcp!=null)?dcp:rData;
             
-            System.out.print("{$} Mark : [");
-            for(int i=0;i<dp.getLength();i++){
-                if(i<data.length)
-                    data[i]=dp.getData()[i];
-                if(i>data.length){
-                    ip[i-(data.length+1)]=dp.getData()[i];
-                    System.out.print(dp.getData()[i]);
-                }
+            int beginMark=0;
+            for(int i=0;i<inData.length;i++){
+                System.out.print(inData[i]);
+                if(inData[i]==(byte) -2)
+                    beginMark=i+1;
             }
-            System.out.println("]");
-            this.mark.add(ip);
+            System.out.println("");
+            byte[] data = new byte[beginMark];
+            byte[] mark = new byte[inData.length-beginMark];
+            for(int i=0;i<data.length;i++)
+                if(i<beginMark-1)
+                    data[i]=inData[i];
+                else if(i>=beginMark)
+                    mark[i-beginMark]=inData[i];
+                    
+            this.mark.add(mark);
             this.data.add(data);
-            System.out.println("[M] Mark Length : ["+ip.length+"]");
+            System.out.println("[M] Mark Length : ["+mark.length+"]");
             System.out.println("[D] Data Length : ["+data.length+"]");
             //End of transation
             if(data[0]==-1)
