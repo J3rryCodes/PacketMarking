@@ -17,10 +17,22 @@ public class SourceIPReconstructor extends javax.swing.JFrame {
     /**
      * Creates new form SourceIPReconstructor
      */
-    private String mark;
-    ArrayList<String> path = new ArrayList<>();
-    public SourceIPReconstructor() {
+    private ArrayList<byte[]> mark = new ArrayList<>();
+    private ArrayList<String> path = new ArrayList<>();
+    private String[] source;
+    public SourceIPReconstructor(ArrayList<byte[]> mark) {
+        this.mark = mark;
         initComponents();
+        jList1.setModel(new javax.swing.AbstractListModel() {
+            String[] strings = { "" };
+            public int getSize() { return strings.length; }
+            public Object getElementAt(int i) { return strings[i]; }
+        });
+        jList2.setModel(new javax.swing.AbstractListModel() {
+            String[] strings = { "" };
+            public int getSize() { return strings.length; }
+            public Object getElementAt(int i) { return strings[i]; }
+        });
     }
 
     /**
@@ -35,7 +47,6 @@ public class SourceIPReconstructor extends javax.swing.JFrame {
         addresTxt = new javax.swing.JTextField();
         addBtn = new javax.swing.JButton();
         calBtn = new javax.swing.JButton();
-        sourceTxt = new javax.swing.JTextField();
         jLabel1 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         jList1 = new javax.swing.JList();
@@ -80,25 +91,20 @@ public class SourceIPReconstructor extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap(18, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(calBtn)
-                        .addGap(18, 18, 18)
-                        .addComponent(sourceTxt, javax.swing.GroupLayout.PREFERRED_SIZE, 289, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 354, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(2, 2, 2)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 172, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 159, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jScrollPane2)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jLabel1)
                                 .addGap(18, 18, 18)
-                                .addComponent(addresTxt, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(addresTxt, javax.swing.GroupLayout.DEFAULT_SIZE, 258, Short.MAX_VALUE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(addBtn)))))
-                .addGap(22, 22, 22))
+                                .addComponent(addBtn))
+                            .addComponent(calBtn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                .addGap(28, 28, 28))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -109,13 +115,11 @@ public class SourceIPReconstructor extends javax.swing.JFrame {
                     .addComponent(addBtn)
                     .addComponent(jLabel1))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jScrollPane1)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 195, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(calBtn)
-                    .addComponent(sourceTxt, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(calBtn)
+                .addGap(26, 26, 26)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 248, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -135,18 +139,20 @@ public class SourceIPReconstructor extends javax.swing.JFrame {
     }//GEN-LAST:event_addBtnActionPerformed
 
     private void calBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_calBtnActionPerformed
-        String pre=path.get(0);
-        for(int i=1;path.size();i++){
-            pre=new 
+        source=new String[mark.size()];
+        for(int i=0;i<mark.size();i++){
+            byte[] tmp=mark.get(i);
+            for(String p:path){
+                tmp=XORConverter.XOR(p.getBytes(),tmp);
+                System.out.println(">>>>>>>>>>"+tmp);
+            }
+            source[i] = new String(tmp);
         }
+        jList2.setModel(new javax.swing.AbstractListModel() {
+            public int getSize() { return source.length; }
+            public Object getElementAt(int i) { return source[i]; }
+        });
     }//GEN-LAST:event_calBtnActionPerformed
-
-    public void setMark(String mark) {
-        this.mark = mark;
-    }
-
-    
-    
     
     /**
      * @param args the command line arguments
@@ -178,7 +184,7 @@ public class SourceIPReconstructor extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new SourceIPReconstructor().setVisible(true);
+               // new SourceIPReconstructor().setVisible(true);
             }
         });
     }
@@ -192,6 +198,5 @@ public class SourceIPReconstructor extends javax.swing.JFrame {
     private javax.swing.JList jList2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JTextField sourceTxt;
     // End of variables declaration//GEN-END:variables
 }
