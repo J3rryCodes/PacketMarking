@@ -5,21 +5,23 @@
  */
 package router;
 
+import java.awt.event.ItemListener;
 import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  *
- * @author MadEye
+ * @author J3rryCodes
  */
 public class RouterGUI extends javax.swing.JFrame {
 
     /**
      * Creates new form RouterGUI
      */
+    boolean isMark=false;
     public RouterGUI() {
-        initComponents();
+        initComponents();  
     }
 
     /**
@@ -34,7 +36,7 @@ public class RouterGUI extends javax.swing.JFrame {
         prvPort = new javax.swing.JTextField();
         nxtPort = new javax.swing.JTextField();
         jButton1 = new javax.swing.JButton();
-        isMark = new javax.swing.JCheckBox();
+        isMarkChkbx = new javax.swing.JCheckBox();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         iptxt = new javax.swing.JTextField();
@@ -50,7 +52,12 @@ public class RouterGUI extends javax.swing.JFrame {
             }
         });
 
-        isMark.setText("Enable Packet Marking");
+        isMarkChkbx.setText("Enable Packet Marking");
+        isMarkChkbx.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                checkIsMarkedCheckbox(evt);
+            }
+        });
 
         jLabel1.setText("Router ID:");
 
@@ -92,7 +99,7 @@ public class RouterGUI extends javax.swing.JFrame {
                         .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 93, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(169, 169, 169))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(isMark, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(isMarkChkbx, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(148, 148, 148))))
         );
         layout.setVerticalGroup(
@@ -112,7 +119,7 @@ public class RouterGUI extends javax.swing.JFrame {
                         .addComponent(jLabel2))
                     .addComponent(jLabel1))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 66, Short.MAX_VALUE)
-                .addComponent(isMark)
+                .addComponent(isMarkChkbx)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jButton1)
                 .addContainerGap())
@@ -122,13 +129,17 @@ public class RouterGUI extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        boolean flag = isMark.isEnabled();
+        //is enable packet marking
         try {
-            new Router(Integer.parseInt(prvPort.getText()),Integer.parseInt(nxtPort.getText()),iptxt.getText(),flag).start();
+            new Router(Integer.parseInt(prvPort.getText()),Integer.parseInt(nxtPort.getText()),iptxt.getText(),isMark).start();
         } catch (UnknownHostException ex) {
             Logger.getLogger(RouterGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void checkIsMarkedCheckbox(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_checkIsMarkedCheckbox
+        isMark=!isMark;
+    }//GEN-LAST:event_checkIsMarkedCheckbox
 
     /**
      * @param args the command line arguments
@@ -167,7 +178,7 @@ public class RouterGUI extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField iptxt;
-    private javax.swing.JCheckBox isMark;
+    private javax.swing.JCheckBox isMarkChkbx;
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;

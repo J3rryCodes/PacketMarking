@@ -10,7 +10,7 @@ import java.net.InetAddress;
 
 /**
  *
- * @author MadEye
+ * @author J3rryCodes
  */
 public class XORConverter {
     public static byte[] XOR(byte[] p1,byte[] mark) {

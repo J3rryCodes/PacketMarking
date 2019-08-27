@@ -10,18 +10,19 @@ import java.util.ArrayList;
 public class FileReceiver extends Thread {
 
     private static final int MAX_LEN = 544;
-    File file;
-    InetAddress ipAddress;
-    String fName;
-    DatagramSocket dsoc;
-    ArrayList<byte[]> mark;
-    ArrayList<byte[]> data;
-    ServerGUI serverGUI;
-    
+    private File file;
+    private InetAddress ipAddress;
+    private String fName;
+    private DatagramSocket dsoc;
+    private ArrayList<byte[]> mark;
+    private ArrayList<byte[]> data;
+    private ServerGUI serverGUI;
+    private boolean isEncrypt;
 
-    public FileReceiver(int serverPort) {
-        mark = new ArrayList<>();
-        data = new ArrayList<>();
+    public FileReceiver(int serverPort, boolean flag) {
+        this.mark = new ArrayList<>();
+        this.data = new ArrayList<>();
+        this.isEncrypt = flag;
         try {
             dsoc = new DatagramSocket(serverPort);
         } catch (Exception ex) {
@@ -32,25 +33,44 @@ public class FileReceiver extends Thread {
 
     @Override
     public void run() {
-            try {
-                System.out.println("Listening Started");
+        while(true){
+        try {
+            System.out.println("Listening Started");
+            System.out.println("IS PACKET MARKING ENABLED :" + isEncrypt);
+            if (isEncrypt) {
+                receiveMarkedData();
+                //new PackageAnalizer(mark, data).dataInfo();
+            } else {
                 receiveData();
-                new PackageAnalizer(mark, data).dataInfo();
-                java.awt.EventQueue.invokeLater(new Runnable() {
-                    public void run() {
-                        new SourceIPReconstructor(mark).setVisible(true);
-                    }
-                });
-                System.out.println("Listening Completed");
-                new PackageAnalizer(mark, data).dataInfo();
-            } catch (Exception e) {
-                e.printStackTrace();
             }
+            SourceIPReconstructor.setMark(mark);
+            System.out.println("Listening Completed");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        }
     }
-
-    public void receiveData() throws IOException {
-        boolean flag = true;
-        while (flag) {
+    
+    //noraml data
+    public void receiveData() throws IOException{
+        while (true) {
+            byte b[] = new byte[MAX_LEN];
+            DatagramPacket dp = new DatagramPacket(b, b.length);
+            dsoc.receive(dp);
+            System.out.println("[>] Received Packet [Size: " + dp.getLength() + "]");
+            
+            //eof file
+            if(dp.getData()[0]==(byte)-1)
+                break;
+            data.add(dp.getData());
+            mark.add(dp.getAddress().getAddress());
+        }
+        //refreshing window and showing data name
+        showData();
+    }
+    //marked encrypted data
+    public void receiveMarkedData() throws IOException {
+        while (true) {
             byte b[] = new byte[MAX_LEN];
             DatagramPacket dp = new DatagramPacket(b, b.length);
             dsoc.receive(dp);
@@ -73,7 +93,7 @@ public class FileReceiver extends Thread {
             System.out.println("");
             byte[] data = new byte[beginMark];
             byte[] mark = new byte[inData.length - beginMark];
-            for (int i = 0; i < data.length; i++) {
+            for (int i = 0; i < inData.length; i++) {
                 if (i < beginMark - 1) {
                     data[i] = inData[i];
                 } else if (i >= beginMark) {
@@ -91,17 +111,18 @@ public class FileReceiver extends Thread {
         }
         showData();
     }
-    
-    void showData(){
-        String d="";
-        String name=new String(data.get(0));
-        for(int i=1;i<data.size();i++)
-            d+=new String(data.get(i));
-        serverGUI.refreshFrame(name,d);
+
+    void showData() {
+        String d = "";
+        String name = new String(data.get(0));
+        for (int i = 1; i < data.size(); i++) {
+            d += new String(data.get(i));
+        }
+        serverGUI.refreshFrame(name, d);
     }
 
     public void setServerGUI(ServerGUI serverGUI) {
         this.serverGUI = serverGUI;
     }
-    
+
 }

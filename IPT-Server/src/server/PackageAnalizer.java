@@ -11,7 +11,7 @@ import java.util.ArrayList;
 
 /**
  *
- * @author MadEye
+ * @author J3rryCodes
  */
 public class PackageAnalizer {
 

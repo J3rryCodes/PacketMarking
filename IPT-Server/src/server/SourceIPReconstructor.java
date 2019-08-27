@@ -7,31 +7,34 @@ package server;
 
 import java.util.ArrayList;
 import javax.swing.DefaultListModel;
+import javax.swing.SwingUtilities;
 
 /**
  *
- * @author MadEye
+ * @author J3rryCodes
  */
 public class SourceIPReconstructor extends javax.swing.JFrame {
 
     /**
      * Creates new form SourceIPReconstructor
      */
-    private ArrayList<byte[]> mark = new ArrayList<>();
+    private static ArrayList<byte[]> mark = new ArrayList<>();
     private ArrayList<String> path = new ArrayList<>();
     private String[] source;
-    public SourceIPReconstructor(ArrayList<byte[]> mark) {
-        this.mark = mark;
+    public SourceIPReconstructor() {
         initComponents();
         jList1.setModel(new javax.swing.AbstractListModel() {
             String[] strings = { "" };
             public int getSize() { return strings.length; }
             public Object getElementAt(int i) { return strings[i]; }
         });
+        
+        String[] marks = new String[mark.size()];
+        for(int i=0;i<mark.size();i++)
+            marks[i] = new String(mark.get(i));
         jList2.setModel(new javax.swing.AbstractListModel() {
-            String[] strings = { "" };
-            public int getSize() { return strings.length; }
-            public Object getElementAt(int i) { return strings[i]; }
+            public int getSize() { return marks.length; }
+            public Object getElementAt(int i) { return marks[i]; }
         });
     }
 
@@ -54,6 +57,14 @@ public class SourceIPReconstructor extends javax.swing.JFrame {
         jList2 = new javax.swing.JList();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosed(java.awt.event.WindowEvent evt) {
+                closedWindow(evt);
+            }
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                closeWindow(evt);
+            }
+        });
 
         addBtn.setText("ADD");
         addBtn.addActionListener(new java.awt.event.ActionListener() {
@@ -90,21 +101,19 @@ public class SourceIPReconstructor extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(18, Short.MAX_VALUE)
+                .addContainerGap(20, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 354, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(2, 2, 2)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jScrollPane2)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel1)
-                                .addGap(18, 18, 18)
-                                .addComponent(addresTxt, javax.swing.GroupLayout.DEFAULT_SIZE, 258, Short.MAX_VALUE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(addBtn))
-                            .addComponent(calBtn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                .addGap(28, 28, 28))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(jScrollPane2)
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(jLabel1)
+                            .addGap(18, 18, 18)
+                            .addComponent(addresTxt, javax.swing.GroupLayout.DEFAULT_SIZE, 258, Short.MAX_VALUE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(addBtn))
+                        .addComponent(calBtn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addGap(26, 26, 26))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -118,9 +127,9 @@ public class SourceIPReconstructor extends javax.swing.JFrame {
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(calBtn)
-                .addGap(26, 26, 26)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 248, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(26, Short.MAX_VALUE))
         );
 
         pack();
@@ -144,7 +153,6 @@ public class SourceIPReconstructor extends javax.swing.JFrame {
             byte[] tmp=mark.get(i);
             for(String p:path){
                 tmp=XORConverter.XOR(p.getBytes(),tmp);
-                System.out.println(">>>>>>>>>>"+tmp);
             }
             source[i] = new String(tmp);
         }
@@ -153,6 +161,14 @@ public class SourceIPReconstructor extends javax.swing.JFrame {
             public Object getElementAt(int i) { return source[i]; }
         });
     }//GEN-LAST:event_calBtnActionPerformed
+
+    private void closeWindow(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_closeWindow
+        System.out.println("ending");
+    }//GEN-LAST:event_closeWindow
+
+    private void closedWindow(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_closedWindow
+        System.out.println("Ended");
+    }//GEN-LAST:event_closedWindow
     
     /**
      * @param args the command line arguments
@@ -183,11 +199,17 @@ public class SourceIPReconstructor extends javax.swing.JFrame {
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-               // new SourceIPReconstructor().setVisible(true);
-            }
-        });
+                    public void run() {
+                        new SourceIPReconstructor().setVisible(true);
+                    }
+                });
     }
+
+    public static void setMark(ArrayList<byte[]> mark) {
+        SourceIPReconstructor.mark = mark;
+    }
+    
+    
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addBtn;
